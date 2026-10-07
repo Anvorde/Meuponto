@@ -1,0 +1,212 @@
+<!doctype html><html><head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <script src="https://myhub.ia.br/canvas-vendor/tailwind.js"></script>
+    <style>body{margin:0;padding:16px;box-sizing:border-box;font-family:system-ui,sans-serif;}</style>
+    </head><body><style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #101110; color: #eee9df;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+    min-height: 100vh; padding: 24px 16px 36px;
+  }
+  .app { max-width: 480px; margin: 0 auto; }
+  .topline { display:flex; justify-content:space-between; align-items:center; color:#9e9a8f; font-size:12px; letter-spacing:.09em; text-transform:uppercase; }
+  .dot { width:8px; height:8px; background:#b7c58c; border-radius:50%; display:inline-block; margin-right:7px; box-shadow:0 0 12px #b7c58c88; }
+  h1 { font-family: Georgia, serif; font-size:34px; font-weight:400; margin:22px 0 4px; letter-spacing:-.04em; }
+  .sub { color:#96948c; font-size:14px; margin:0 0 24px; }
+  .clock-card, .panel { background:#191b19; border:1px solid #2d302b; border-radius:18px; }
+  .clock-card { padding:23px 18px 18px; text-align:center; }
+  .clock {
+    width:188px; height:188px; border:1px solid #50544a; border-radius:50%;
+    margin:0 auto 15px; position:relative;
+    background:radial-gradient(circle at center,#232620 0,#191b19 69%);
+    box-shadow:inset 0 0 22px #0008, 0 12px 34px #0004;
+  }
+  .tick { position:absolute; width:2px; height:7px; background:#74796c; left:calc(50% - 1px); top:8px; transform-origin:1px 85px; }
+  .num { position:absolute; color:#d8d4c8; font-family:Georgia,serif; font-size:16px; transform:translate(-50%,-50%); }
+  .hand { position:absolute; bottom:50%; left:calc(50% - 1px); transform-origin:bottom center; border-radius:3px; }
+  .hour { width:4px; height:49px; background:#e9e2d2; }
+  .minute { width:2px; height:66px; background:#c5cf9a; }
+  .second { width:1px; height:72px; background:#c27b5e; }
+  .pin { position:absolute; width:9px; height:9px; border-radius:50%; background:#c5cf9a; left:calc(50% - 4.5px); top:calc(50% - 4.5px); }
+  .digital { font-variant-numeric:tabular-nums; font-size:30px; letter-spacing:.05em; }
+  .today { color:#9d9b91; font-size:13px; margin-top:4px; text-transform:capitalize; }
+  .panel { margin-top:15px; padding:18px; }
+  .section-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .section-head h2 { margin:0; font:400 19px Georgia,serif; }
+  .tiny { color:#85877e; font-size:12px; }
+  .steps { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .step { min-height:58px; border:1px solid #30332e; background:#151715; border-radius:12px; padding:10px 11px; display:flex; align-items:center; gap:10px; }
+  .step .icon { width:27px; height:27px; display:grid; place-items:center; border-radius:50%; background:#242720; color:#aeb78d; font-size:13px; flex:none; }
+  .step .label { color:#a9a99f; font-size:12px; }
+  .step .time { color:#eee9df; font-size:14px; margin-top:2px; font-variant-numeric:tabular-nums; }
+  .step.done { border-color:#59624a; }
+  .step.done .icon { background:#c5cf9a; color:#171912; }
+  .punch {
+    width:100%; margin-top:14px; border:0; border-radius:12px; padding:15px 14px;
+    color:#171912; background:#c5cf9a; font-size:15px; font-weight:650; cursor:pointer;
+    transition:transform .12s, background .12s;
+  }
+  .punch:active { transform:scale(.985); background:#d3d9b5; }
+  .punch:disabled { cursor:default; opacity:.55; }
+  .stats { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .stat { background:#151715; border-radius:12px; padding:13px; }
+  .stat-label { color:#92948a; font-size:12px; }
+  .stat-value { font-family:Georgia,serif; font-size:25px; margin-top:5px; color:#e7e4d9; }
+  .history { margin-top:13px; }
+  .record { display:flex; justify-content:space-between; gap:10px; padding:11px 0; border-top:1px solid #2c2f2a; align-items:center; }
+  .record-date { font-size:13px; color:#d9d6cb; }
+  .record-times { color:#8e9087; font-size:11px; margin-top:4px; line-height:1.5; }
+  .record-total { text-align:right; color:#c5cf9a; font-size:14px; white-space:nowrap; }
+  .empty { color:#888a80; font-size:13px; line-height:1.5; padding:5px 0 1px; }
+  .foot { color:#777970; font-size:11px; line-height:1.5; text-align:center; padding:17px 12px 0; }
+  @media(max-width:360px) { body { padding:18px 12px 28px; } .clock { width:170px;height:170px; } .tick { transform-origin:1px 76px; } }
+</style>
+
+<div class="app">
+  <div class="topline"><span><i class="dot"></i>meu cantinho do ponto</span><span id="weekdayTag"></span></div>
+  <h1>Meu ponto</h1>
+  <p class="sub">Sem complicação. Só marcar e seguir o dia.</p>
+
+  <section class="clock-card">
+    <div class="clock" id="clock">
+      <div class="hand hour" id="hourHand"></div>
+      <div class="hand minute" id="minuteHand"></div>
+      <div class="hand second" id="secondHand"></div>
+      <div class="pin"></div>
+    </div>
+    <div class="digital" id="digital">00:00:00</div>
+    <div class="today" id="today"></div>
+  </section>
+
+  <section class="panel">
+    <div class="section-head"><h2>Hoje</h2><span class="tiny" id="workState">Pronto pra começar</span></div>
+    <div class="steps" id="steps"></div>
+    <button class="punch" id="punchBtn">Bater entrada</button>
+  </section>
+
+  <section class="panel">
+    <div class="section-head"><h2>Resumo</h2><span class="tiny">desde o primeiro registro</span></div>
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Dias trabalhados</div><div class="stat-value" id="daysCount">0</div></div>
+      <div class="stat"><div class="stat-label">Horas registradas</div><div class="stat-value" id="hoursCount">0h</div></div>
+    </div>
+    <div class="history" id="history"></div>
+  </section>
+  <div class="foot">Seus registros ficam neste endereço, sem conta e sem enviar dados para lugar nenhum.<br>Favorite esta página para encontrá-la de novo.</div>
+</div>
+
+<script>
+(() => {
+  const labels = ["Entrada", "Saída para intervalo", "Volta do intervalo", "Saída final"];
+  const icons = ["↘", "☕", "↗", "⌂"];
+  let records = [];
+  try {
+    const raw = location.hash.slice(1);
+    if (raw) {
+      const decoded = decodeURIComponent(escape(atob(raw)));
+      const saved = JSON.parse(decoded);
+      if (Array.isArray(saved)) records = saved;
+    }
+  } catch (_) { records = []; }
+
+  const dateKey = d => {
+    const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,"0"), day = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  };
+  const todayKey = () => dateKey(new Date());
+  const timeText = ts => ts ? new Date(ts).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}) : "—";
+  const prettyDate = key => {
+    const [y,m,d] = key.split("-").map(Number);
+    return new Date(y,m-1,d).toLocaleDateString("pt-BR",{weekday:"short",day:"numeric",month:"short"});
+  };
+  function save() {
+    try {
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(records))));
+      history.replaceState(null,"",location.pathname + location.search + "#" + encoded);
+    } catch (_) {}
+  }
+  function todayRecord() { return records.find(r => r.date === todayKey()); }
+  function elapsedMs(r, now=Date.now()) {
+    if (!r || !r.punches || !r.punches[0]) return 0;
+    const end = r.punches[3] || now;
+    let total = Math.max(0, end - r.punches[0]);
+    if (r.punches[1]) total -= Math.max(0, (r.punches[2] || now) - r.punches[1]);
+    return Math.max(0,total);
+  }
+  function durationText(ms) {
+    const mins = Math.floor(ms/60000), h = Math.floor(mins/60), m = mins%60;
+    return `${h}h ${String(m).padStart(2,"0")}m`;
+  }
+  function render() {
+    const r = todayRecord();
+    const punches = r ? r.punches : [];
+    const next = punches.length;
+    const steps = document.getElementById("steps");
+    steps.innerHTML = labels.map((label,i) => `
+      <div class="step ${punches[i] ? "done" : ""}">
+        <div class="icon">${punches[i] ? "✓" : icons[i]}</div>
+        <div><div class="label">${label}</div><div class="time">${punches[i] ? timeText(punches[i]) : "—"}</div></div>
+      </div>`).join("");
+    const button = document.getElementById("punchBtn");
+    button.disabled = next >= 4;
+    button.textContent = next < 4 ? `Bater ${labels[next].toLowerCase()}` : "Expediente fechado por hoje";
+    document.getElementById("workState").textContent =
+      next === 0 ? "Pronto pra começar" : next >= 4 ? "Tudo certo por hoje" : "Em andamento";
+    const workedDays = records.filter(x => x.punches && x.punches[0]).length;
+    const totalMs = records.reduce((sum,x) => sum + elapsedMs(x),0);
+    document.getElementById("daysCount").textContent = workedDays;
+    document.getElementById("hoursCount").textContent = `${Math.floor(totalMs/3600000)}h`;
+    const historyEl = document.getElementById("history");
+    const recent = [...records].filter(x => x.punches && x.punches[0]).sort((a,b)=>b.date.localeCompare(a.date));
+    if (!recent.length) {
+      historyEl.innerHTML = '<div class="empty">Seu resumo aparece aqui depois do primeiro registro.</div>';
+    } else {
+      historyEl.innerHTML = recent.slice(0,12).map(x => {
+        const p = x.punches || [];
+        const times = `Entrou ${timeText(p[0])} · Intervalo ${timeText(p[1])}–${timeText(p[2])}<br>Saída ${timeText(p[3])}`;
+        return `<div class="record"><div><div class="record-date">${prettyDate(x.date)}</div><div class="record-times">${times}</div></div><div class="record-total">${durationText(elapsedMs(x))}</div></div>`;
+      }).join("");
+    }
+  }
+  document.getElementById("punchBtn").addEventListener("click", () => {
+    const key = todayKey();
+    let r = records.find(x => x.date === key);
+    if (!r) { r = {date:key,punches:[]}; records.push(r); }
+    if (r.punches.length < 4) {
+      r.punches.push(Date.now());
+      save();
+      render();
+    }
+  });
+
+  function drawClock() {
+    const now = new Date();
+    const sec = now.getSeconds(), min = now.getMinutes(), hr = now.getHours()%12;
+    document.getElementById("secondHand").style.transform = `rotate(${sec*6}deg)`;
+    document.getElementById("minuteHand").style.transform = `rotate(${min*6+sec*.1}deg)`;
+    document.getElementById("hourHand").style.transform = `rotate(${hr*30+min*.5}deg)`;
+    document.getElementById("digital").textContent = now.toLocaleTimeString("pt-BR");
+    document.getElementById("today").textContent = now.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
+    document.getElementById("weekdayTag").textContent = now.toLocaleDateString("pt-BR",{weekday:"short"});
+    if (todayKey() !== window._lastDate) { window._lastDate = todayKey(); render(); }
+    const clock = document.getElementById("clock");
+    if (!clock.dataset.marks) {
+      for (let i=0;i<12;i++) {
+        const tick=document.createElement("div"); tick.className="tick"; tick.style.transform=`rotate(${i*30}deg)`; clock.appendChild(tick);
+        const n=document.createElement("div"); n.className="num"; n.textContent=String(i||12);
+        const angle=(i*30-90)*Math.PI/180, radius=72;
+        n.style.left=`calc(50% + ${Math.cos(angle)*radius}px)`;
+        n.style.top=`calc(50% + ${Math.sin(angle)*radius}px)`;
+        clock.appendChild(n);
+      }
+      clock.dataset.marks="1";
+    }
+  }
+  window._lastDate = todayKey();
+  render();
+  drawClock();
+  setInterval(drawClock,1000);
+  setInterval(render,60000);
+})();
+</script></body></html>
